@@ -1,7 +1,7 @@
 import json
 
 def read_insta_json_data():
-    filepath = "/Users/lennartmac/Documents/Projects/python/py_diski_influencers/util/users_14may.json"  # Pas dit aan naar jouw bestand
+    filepath = "/Users/lennartmac/Documents/Projects/python/py_diski_influencers/jsons/users_14may.json"
 
     # JSON inladen
     with open(filepath, 'r', encoding='utf-8') as f:

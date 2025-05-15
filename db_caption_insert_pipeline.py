@@ -1,12 +1,16 @@
-
-from util.read_json import read_insta_json_data
+from util.read_json_insta import read_insta_json_data
+from util.read_json_tiktok import read_tiktok_json_data
 from db.db_insert import insert_records
 from util.captions_util import normalize_caption, check_keywords_in_caption
 
-def main():
-    user_posts = read_insta_json_data()
+def main(platform):
+    if platform == "instagram":
+        user_posts = read_insta_json_data()
+    elif platform == "tiktok":
+        user_posts = read_tiktok_json_data()
+    else:
+        raise ValueError("Unsupported platform. Use 'instagram' or 'tiktok'.")
 
-    # Stap 3: Omzetten naar lijst met records voor db_insert
     records = []
     for username, posts in user_posts.items():
         for post in posts:
@@ -20,8 +24,8 @@ def main():
                     'post_date': post['timestamp']
                 })
 
-    # Stap 4: Records in database steken
-    insert_records(records, "instagram")
+    insert_records(records, platform)
+    print(f"Inserted {len(records)} {platform} records.")
 
 if __name__ == "__main__":
-    main()
+    main("instagram")

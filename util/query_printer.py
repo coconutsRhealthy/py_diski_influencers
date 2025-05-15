@@ -41,11 +41,7 @@ def combine_and_print_unique_ai_analysis(inserted_after: datetime, post_date_aft
             continue
 
         try:
-            intermediate = json.loads(ai_json_str)  # first load, gives a string again
-            if isinstance(intermediate, str):
-                ai_data = json.loads(intermediate)  # second load, now it's list/dict
-            else:
-                ai_data = intermediate
+            ai_data = json.loads(ai_json_str)
         except json.JSONDecodeError:
             continue
 

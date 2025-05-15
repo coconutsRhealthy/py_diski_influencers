@@ -28,11 +28,8 @@ def run_pipeline(inserted_after: datetime, post_date_after: datetime = None):
             print("Warning: AI extraction returned None. Skipping insert.")
             continue
 
-        # Convert the AI result back to JSON string for storage
-        ai_result_json = json.dumps(ai_result, ensure_ascii=False)
-
         # Insert AI analysis into the database
-        insert_ai_analysis(post_url, caption, ai_result_json)
+        insert_ai_analysis(post_url, caption, ai_result)
 
         print("Inserted AI analysis.")
 

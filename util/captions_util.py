@@ -18,3 +18,31 @@ def normalize_caption(caption):
 
     # Optionally, remove extra whitespace
     return re.sub(r'\s+', ' ', ascii_only).strip()
+
+def check_keywords_in_caption(caption):
+    keywords = [
+        "korting",
+        "discount",
+        "% off",
+        "%off",
+        "% of",
+        "%of",
+        "my code",
+        "mijn code",
+        "de code",
+        "code:",
+        "with code",
+        "met code",
+        "use code",
+        "gebruik code",
+        "werbung",
+        "anzeige",
+        "rabatt",
+        "dem code",
+        "le code",
+        "remise",
+        "réduction",
+        "reduction",
+    ]
+    caption_lower = caption.lower()
+    return any(keyword.lower() in caption_lower for keyword in keywords)

@@ -1,11 +1,15 @@
 from db.db_connection import get_database_connection
 
-def insert_records(records, batch_size=500):
+def insert_records(records, table, batch_size=500):
+    allowed_tables = {"instagram", "tiktok"}
+    if table not in allowed_tables:
+        raise ValueError(f"Invalid table name: {table}")
+
     with get_database_connection() as conn:
         cursor = conn.cursor()
 
-        insert_query = """
-            INSERT IGNORE INTO instagram (influencer_name, caption, post_url, post_date)
+        insert_query = f"""
+            INSERT IGNORE INTO {table} (influencer_name, caption, post_url, post_date)
             VALUES (%s, %s, %s, %s);
         """
 
@@ -24,4 +28,4 @@ def insert_records(records, batch_size=500):
             cursor.executemany(insert_query, values)
             conn.commit()
 
-        print(f"Tried inserting {len(records)} records in batches of {batch_size}. Duplicate entries were ignored.")
+    print(f"Tried inserting {len(records)} records into '{table}' in batches of {batch_size}. Duplicate entries were ignored.")

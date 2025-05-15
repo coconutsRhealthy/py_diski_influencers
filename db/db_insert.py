@@ -1,6 +1,6 @@
 from db.db_connection import get_database_connection
 
-def insert_records(records):
+def insert_records(records, batch_size=500):
     with get_database_connection() as conn:
         cursor = conn.cursor()
 
@@ -9,17 +9,19 @@ def insert_records(records):
             VALUES (%s, %s, %s, %s);
         """
 
-        values = [
-            (
-                record['influencer_name'],
-                record['caption'],
-                record['post_url'],
-                record['post_date']
-            )
-            for record in records
-        ]
+        for i in range(0, len(records), batch_size):
+            batch = records[i:i + batch_size]
+            values = [
+                (
+                    record['influencer_name'],
+                    record['caption'],
+                    record['post_url'],
+                    record['post_date']
+                )
+                for record in batch
+            ]
 
-        cursor.executemany(insert_query, values)
-        conn.commit()
+            cursor.executemany(insert_query, values)
+            conn.commit()
 
-        print(f"Tried inserting {len(records)} records. Duplicate entries were ignored.")
+        print(f"Tried inserting {len(records)} records in batches of {batch_size}. Duplicate entries were ignored.")

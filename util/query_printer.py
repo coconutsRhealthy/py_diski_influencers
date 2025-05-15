@@ -35,6 +35,8 @@ def combine_and_print_unique_ai_analysis(inserted_after: datetime, post_date_aft
 
     for record in records:
         ai_json_str = record.get('ai_analysis')
+        influencer_name = record.get('influencer_name', None)  # get influencer name from record
+
         if not ai_json_str:
             continue
 
@@ -44,28 +46,54 @@ def combine_and_print_unique_ai_analysis(inserted_after: datetime, post_date_aft
                 ai_data = json.loads(intermediate)  # second load, now it's list/dict
             else:
                 ai_data = intermediate
-
-            #print(type(ai_data))
         except json.JSONDecodeError:
-            # Skip invalid JSON data
             continue
 
-        # ai_data should be a list of discount code dicts
         if isinstance(ai_data, list):
             for entry in ai_data:
-                # Create a unique key based on webshop and code
                 key = (entry.get('webshop'), entry.get('code'))
                 if key not in seen:
                     seen.add(key)
-                    combined_entries.append(entry)
+                    # Add influencer name to the discount code entry
+                    entry_with_user = dict(entry)  # make a copy to avoid mutating original
+                    entry_with_user['influencer_name'] = influencer_name
+                    combined_entries.append(entry_with_user)
         else:
-            # If it's not a list, ignore or handle differently if needed
             continue
 
-    # Print combined unique JSON array
-    print(json.dumps(combined_entries, indent=2, ensure_ascii=False))
+    #print(json.dumps(combined_entries, indent=2, ensure_ascii=False))
+    return combined_entries
+
+
+def print_json_as_csv_style_oud(data):
+    """
+    Prints the provided list of discount code dicts in CSV-style lines:
+    "webshop, code, percentage, influencer_name, MM-DD"
+    """
+    today_str = datetime.now().strftime("%m-%d")
+
+    for entry in data:
+        webshop = entry.get('webshop', '')
+        code = entry.get('code', '')
+        percentage = entry.get('percentage', '')
+        influencer = entry.get('influencer_name', '')
+
+        line = f'"{webshop}, {code}, {percentage}, {influencer}, {today_str}"'
+        print(line)
+
+def print_json_as_csv_style(combined_entries):
+    from datetime import datetime
+    today_str = datetime.now().strftime("%m-%d")
+
+    for entry in combined_entries:
+        webshop = entry.get('webshop', '')
+        code = entry.get('code', '')
+        percentage_str = str(entry.get('percentage')) if entry.get('percentage') is not None else ''
+        influencer_name = entry.get('influencer_name', '')
+        print(f'"{webshop}, {code}, {percentage_str}, {influencer_name}, {today_str}"')
 
 if __name__ == "__main__":
     # Example: print all with ai_analysis inserted in last 3 days
-    inserted_after = datetime.now() - timedelta(days=2)
-    combine_and_print_unique_ai_analysis(inserted_after, inserted_after)
+    inserted_after = datetime.now() - timedelta(days=3)
+    combined_entries = combine_and_print_unique_ai_analysis(inserted_after, inserted_after)
+    print_json_as_csv_style(combined_entries)

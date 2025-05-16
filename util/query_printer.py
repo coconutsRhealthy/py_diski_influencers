@@ -1,10 +1,10 @@
-from db.db_access import get_instagram_records
+from db.db_access import get_records
 from datetime import datetime, timedelta
 import json
 import textwrap
 
-def print_records_with_ai_analysis(inserted_after: datetime, post_date_after: datetime = None):
-    records = get_instagram_records(inserted_after, post_date_after)
+def print_records_with_ai_analysis(table: str, inserted_after: datetime, post_date_after: datetime = None):
+    records = get_records(table, inserted_after, post_date_after)
 
     # Filter records where ai_analysis is NOT None
     filtered = [r for r in records if r.get('ai_analysis') is not None]
@@ -27,8 +27,8 @@ def print_records_with_ai_analysis(inserted_after: datetime, post_date_after: da
             print(record['ai_analysis'])
         print("\n" + "="*50 + "\n")
 
-def combine_and_print_unique_ai_analysis(inserted_after: datetime, post_date_after: datetime = None):
-    records = get_instagram_records(inserted_after, post_date_after)
+def combine_and_print_unique_ai_analysis(table: str, inserted_after: datetime, post_date_after: datetime = None):
+    records = get_records(table, inserted_after, post_date_after)
 
     combined_entries = []
     seen = set()  # To track unique (webshop, code) pairs
@@ -90,6 +90,6 @@ def print_json_as_csv_style(combined_entries):
 
 if __name__ == "__main__":
     # Example: print all with ai_analysis inserted in last 3 days
-    inserted_after = datetime.now() - timedelta(days=3)
-    combined_entries = combine_and_print_unique_ai_analysis(inserted_after, inserted_after)
+    inserted_after = datetime.now() - timedelta(days=5)
+    combined_entries = combine_and_print_unique_ai_analysis("instagram", inserted_after, inserted_after)
     print_json_as_csv_style(combined_entries)

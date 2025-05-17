@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from db.db_access import get_records
 from ai.extract_discount_codes import extract_discount_codes
 from db.db_insert_ai_analysis import insert_ai_analysis
 
-def run_pipeline(table: str, inserted_after: datetime, post_date_after: datetime = None):
-    records = get_records(table, inserted_after, post_date_after)
+def run_pipeline(table: str, inserted_at: date, post_date_after: datetime = None):
+    records = get_records(table, inserted_at, post_date_after)
 
     print(f"[{table.upper()}] Found {len(records)} records to process...")
 
@@ -31,9 +31,9 @@ def run_pipeline(table: str, inserted_after: datetime, post_date_after: datetime
         print("Inserted AI analysis.")
 
 if __name__ == "__main__":
-    inserted_after = datetime.now() - timedelta(days=2)
-    post_date_after = datetime.now() - timedelta(days=2)
+    inserted_at = date(2025, 5, 16)
+    post_date_after = datetime.now() - timedelta(days=3)
 
     # Example runs
-    run_pipeline("instagram", inserted_after, post_date_after)
-    run_pipeline("tiktok", inserted_after, post_date_after)
+    run_pipeline("instagram", inserted_at, post_date_after)
+    run_pipeline("tiktok", inserted_at, post_date_after)

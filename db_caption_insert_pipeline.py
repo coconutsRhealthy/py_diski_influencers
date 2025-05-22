@@ -1,11 +1,13 @@
 from util.read_json_insta import read_insta_json_data
+from util.read_json_insta_mentioned import read_insta_mentioned_json_data
 from util.read_json_tiktok import read_tiktok_json_data
 from db.db_insert_captions import insert_records
 from util.captions_util import normalize_caption, check_keywords_in_caption
 
 def main(platform):
     if platform == "instagram":
-        user_posts = read_insta_json_data()
+        # user_posts = read_insta_json_data()
+        user_posts = read_insta_mentioned_json_data()
     elif platform == "tiktok":
         user_posts = read_tiktok_json_data()
     else:

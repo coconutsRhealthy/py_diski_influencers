@@ -11,7 +11,9 @@ def print_records_with_ai_analysis(table: str, inserted_at: date, post_date_afte
 
     print(f"Found {len(filtered)} records with AI analysis.\n")
 
-    for record in filtered:
+    for i, record in enumerate(filtered, start=1):
+        print(f"[{i}/{len(filtered)}] {record['influencer_name']}")
+        print(record['post_date'])
         print("Caption:")
         wrapped_caption = textwrap.fill(record['caption'], width=150)
         print(wrapped_caption)

@@ -8,6 +8,8 @@ def run_pipeline(table: str, inserted_at: date, post_date_after: datetime = None
 
     print(f"[{table.upper()}] Found {len(records)} records to process...")
 
+    insert_count = 0
+
     for record in records:
         post_url = record['post_url']
         caption = record['caption'] or ""
@@ -28,7 +30,8 @@ def run_pipeline(table: str, inserted_at: date, post_date_after: datetime = None
 
         # Insert into the correct table
         insert_ai_analysis(post_url, caption, ai_result, table=table)
-        print("Inserted AI analysis.")
+        insert_count += 1
+        print(f"Inserted AI analysis. Total inserted so far: {insert_count}")
 
 if __name__ == "__main__":
     inserted_at = date(2025, 5, 16)

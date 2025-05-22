@@ -1,11 +1,18 @@
-from db.db_access import get_records
+from db.db_access import get_records_for_date, get_records_since_datetime
 from datetime import date, datetime, timedelta
 import json
 import textwrap
+from typing import List, Dict
 
-def print_records_with_ai_analysis(table: str, inserted_at: date, post_date_after: datetime = None):
-    records = get_records(table, inserted_at, post_date_after)
+def print_records_with_ai_analysis_for_date(table: str, inserted_at: date, post_date_after: datetime = None):
+    records = get_records_for_date(table, inserted_at, post_date_after)
+    _print_records(records)
 
+def print_records_with_ai_analysis_since_datetime(table: str, inserted_after: datetime, post_date_after: datetime = None):
+    records = get_records_since_datetime(table, inserted_after, post_date_after)
+    _print_records(records)
+
+def _print_records(records: List[Dict]):
     # Filter records where ai_analysis is NOT None
     filtered = [r for r in records if r.get('ai_analysis') is not None]
 
@@ -30,7 +37,7 @@ def print_records_with_ai_analysis(table: str, inserted_at: date, post_date_afte
         print("\n" + "="*50 + "\n")
 
 def combine_and_print_unique_ai_analysis(table: str, inserted_at: date, post_date_after: datetime = None):
-    records = get_records(table, inserted_at, post_date_after)
+    records = get_records_for_date(table, inserted_at, post_date_after)
 
     combined_entries = []
     seen = set()  # To track unique (webshop, code) pairs
@@ -62,23 +69,6 @@ def combine_and_print_unique_ai_analysis(table: str, inserted_at: date, post_dat
     #print(json.dumps(combined_entries, indent=2, ensure_ascii=False))
     return combined_entries
 
-
-def print_json_as_csv_style_oud(data):
-    """
-    Prints the provided list of discount code dicts in CSV-style lines:
-    "webshop, code, percentage, influencer_name, MM-DD"
-    """
-    today_str = datetime.now().strftime("%m-%d")
-
-    for entry in data:
-        webshop = entry.get('webshop', '')
-        code = entry.get('code', '')
-        percentage = entry.get('percentage', '')
-        influencer = entry.get('influencer_name', '')
-
-        line = f'"{webshop}, {code}, {percentage}, {influencer}, {today_str}"'
-        print(line)
-
 def print_json_as_csv_style(combined_entries):
     from datetime import datetime
     today_str = datetime.now().strftime("%m-%d")
@@ -96,4 +86,4 @@ if __name__ == "__main__":
     post_date_after = datetime.now() - timedelta(days=30)
     # combined_entries = combine_and_print_unique_ai_analysis("tiktok", inserted_at, post_date_after)
     # print_json_as_csv_style(combined_entries)
-    print_records_with_ai_analysis("tiktok", inserted_at, post_date_after)
+    print_records_with_ai_analysis_for_date("tiktok", inserted_at, post_date_after)

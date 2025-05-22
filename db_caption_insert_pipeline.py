@@ -5,8 +5,9 @@ from db.db_insert_captions import insert_records
 from util.captions_util import normalize_caption, check_keywords_in_caption
 
 def main(platform):
-    if platform == "instagram":
-        # user_posts = read_insta_json_data()
+    if platform == "instagram_user":
+        user_posts = read_insta_json_data()
+    elif platform == "instagram_mention":
         user_posts = read_insta_mentioned_json_data()
     elif platform == "tiktok":
         user_posts = read_tiktok_json_data()

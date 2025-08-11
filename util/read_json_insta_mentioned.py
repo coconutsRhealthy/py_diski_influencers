@@ -1,7 +1,7 @@
 import json
 
 def read_insta_mentioned_json_data():
-    filepath = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned/21mei_big.json"
+    filepath = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned/2025/aug/8aug_small.json"
 
     # JSON inladen
     with open(filepath, 'r', encoding='utf-8') as f:

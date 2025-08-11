@@ -3,7 +3,7 @@ import textwrap
 from util.captions_util import check_keywords_in_caption
 
 def read_insta_hashtag_json_data():
-    filepath = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/hashtag/21mei_nakdfashion.json"
+    filepath = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/hashtag/2025/aug/6aug_nakdfashion.json"
 
     with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f)

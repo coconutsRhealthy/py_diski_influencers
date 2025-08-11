@@ -82,8 +82,10 @@ def print_json_as_csv_style(combined_entries):
 
 if __name__ == "__main__":
     # Example: print all with ai_analysis inserted in last 3 days
-    inserted_at = date(2025, 5, 16)
-    post_date_after = datetime.now() - timedelta(days=30)
+    inserted_at = date(2025, 8, 8)
+    inserted_after = datetime.now() - timedelta(minutes=20)
+    post_date_after = datetime.now() - timedelta(days=3)
     # combined_entries = combine_and_print_unique_ai_analysis("tiktok", inserted_at, post_date_after)
     # print_json_as_csv_style(combined_entries)
-    print_records_with_ai_analysis_for_date("tiktok", inserted_at, post_date_after)
+    # print_records_with_ai_analysis_for_date("tiktok", inserted_at, post_date_after)
+    print_records_with_ai_analysis_since_datetime("instagram", inserted_after, post_date_after)

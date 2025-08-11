@@ -1,7 +1,7 @@
 import json
 
 def read_tiktok_json_data():
-    filepath = "/Users/lennartmac/Documents/Projects/python/py_diski_influencers/jsons/tiktok/tiktok_users_21mei.json"
+    filepath = "/Users/lennartmac/Documents/Projects/python/py_diski_influencers/jsons/tiktok/2025/aug/tiktok_users_8aug.json"
 
     # JSON inladen
     with open(filepath, 'r', encoding='utf-8') as f:

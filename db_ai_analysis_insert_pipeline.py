@@ -34,9 +34,9 @@ def run_pipeline(table: str, inserted_at: date, post_date_after: datetime = None
         print(f"Inserted AI analysis. Total inserted so far: {insert_count}")
 
 if __name__ == "__main__":
-    inserted_at = date(2025, 5, 16)
+    inserted_at = date(2025, 8, 8)
     post_date_after = datetime.now() - timedelta(days=3)
 
     # Example runs
+    # run_pipeline("instagram", inserted_at, post_date_after)
     run_pipeline("instagram", inserted_at, post_date_after)
-    run_pipeline("tiktok", inserted_at, post_date_after)

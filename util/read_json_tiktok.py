@@ -1,11 +1,43 @@
-import json
+from apify_client import ApifyClient
+import os
+
+def load_tiktok_usernames():
+    with open("util/apify_input/tiktok_usernames.txt", "r", encoding="utf-8") as f:
+        tiktok_usernames = [line.strip() for line in f if line.strip()]
+    return tiktok_usernames
+
+def fetch_insta_json_data(tiktok_usernames):
+    apify_token = os.environ.get("APIFY_TOKEN", "secret")
+    client = ApifyClient(apify_token)
+
+    run_input = {
+        "excludePinnedPosts": False,
+        "oldestPostDateUnified": "3 days",
+        "profiles": tiktok_usernames,
+        "resultsPerPage": 100,
+        "shouldDownloadCovers": False,
+        "shouldDownloadSlideshowImages": False,
+        "shouldDownloadSubtitles": False,
+        "shouldDownloadVideos": False,
+        "profileScrapeSections": [
+            "videos"
+        ],
+        "profileSorting": "latest",
+        "searchSection": "",
+        "maxProfilesPerQuery": 10
+    }
+
+    run = client.actor("clockworks/free-tiktok-scraper").call(run_input=run_input)
+
+    dataset_items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+
+    return dataset_items
+
+
 
 def read_tiktok_json_data():
-    filepath = "/Users/lennartmac/Documents/Projects/python/py_diski_influencers/jsons/tiktok/2025/aug/tiktok_users_8aug.json"
-
-    # JSON inladen
-    with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    tiktok_usernames = load_tiktok_usernames()
+    data = fetch_insta_json_data(tiktok_usernames)
 
     user_posts = {}
 
@@ -38,4 +70,4 @@ def read_tiktok_json_data():
 
 if __name__ == "__main__":
     posts = read_tiktok_json_data()
-    print(json.dumps(posts, indent=2, ensure_ascii=False))
+    print(posts)

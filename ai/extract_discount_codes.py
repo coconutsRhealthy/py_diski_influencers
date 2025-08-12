@@ -44,7 +44,7 @@ def extract_discount_codes(captions_text):
 
     # Send prompt and get response from OpenAI API
     response = client.responses.create(
-        model="gpt-4.1-mini",  # or another suitable model like "gpt-4.1-mini" or "gpt-4-turbo"
+        model="gpt-5-mini",  # or another suitable model like "gpt-4.1-mini" or "gpt-4-turbo"
         input=[{
             "role": "user",
             "content": [

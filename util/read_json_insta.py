@@ -1,11 +1,36 @@
-import json
+from apify_client import ApifyClient
+import os
+
+def load_direct_urls():
+    with open("util/apify_input/instagram_user_urls.txt", "r", encoding="utf-8") as f:
+        urls = [line.strip() for line in f if line.strip()]
+    return urls
+
+def fetch_insta_json_data(direct_urls):
+    apify_token = os.environ.get("APIFY_TOKEN", "secret")
+    client = ApifyClient(apify_token)
+
+    run_input = {
+        "addParentData": False,
+        "directUrls": direct_urls,
+        "enhanceUserSearchWithFacebookPage": False,
+        "isUserReelFeedURL": False,
+        "isUserTaggedFeedURL": False,
+        "resultsLimit": 5,
+        "resultsType": "details",
+        "searchType": "hashtag"
+    }
+
+    run = client.actor("apify/instagram-scraper").call(run_input=run_input)
+
+    dataset_items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+
+    return dataset_items
+
 
 def read_insta_json_data():
-    filepath = "/Users/lennartmac/Documents/Projects/python/py_diski_influencers/jsons/insta/users/2025/aug/insta_users_8aug.json"
-
-    # JSON inladen
-    with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    direct_urls = load_direct_urls()
+    data = fetch_insta_json_data(direct_urls)
 
     user_posts = {}
 
@@ -35,4 +60,9 @@ def read_insta_json_data():
     return user_posts
 
 if __name__ == "__main__":
-    read_insta_json_data()
+    user_posts = read_insta_json_data()
+
+    for username, posts in user_posts.items():
+        print(f"\n{username}:")
+        for post in posts:
+            print(f"  {post['timestamp']}: {post['url']} - {post['caption'][:40]}...")

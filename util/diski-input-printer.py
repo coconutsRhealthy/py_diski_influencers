@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 
 
-def print_unique_discount_records_since_datetime2(table: str, inserted_after: datetime):
+def print_unique_discount_records_since_datetime(table: str, inserted_after: datetime):
     records = get_records_since_datetime(table, inserted_after)
 
     seen = set()
@@ -11,7 +11,6 @@ def print_unique_discount_records_since_datetime2(table: str, inserted_after: da
 
     for record in records:
         ai_analysis = record.get('ai_analysis')
-        ai_canonical = record.get('ai_canonical') or "UNKNOWN"
 
         if not ai_analysis:
             continue
@@ -24,12 +23,21 @@ def print_unique_discount_records_since_datetime2(table: str, inserted_after: da
         if not isinstance(ai_analysis, list):
             continue
 
+        ai_canonical = record.get('ai_canonical')
+        if not ai_canonical or ai_canonical.upper() == "UNKNOWN":
+            # fallback to webshop from ai_analysis json
+            webshop_name = None
+            for entry in ai_analysis:
+                if isinstance(entry, dict) and entry.get("webshop"):
+                    webshop_name = "-----" + entry.get("webshop").upper()
+                    break
+            ai_canonical = webshop_name or "UNKNOWN"
+
         influencer_name = record.get('influencer_name', 'UNKNOWN')
         inserted_at = record.get('inserted_at')
         if not inserted_at:
             continue
 
-        # Format inserted_at as MM-DD
         formatted_date = inserted_at.strftime("%m-%d")
 
         for entry in ai_analysis:
@@ -51,4 +59,4 @@ def print_unique_discount_records_since_datetime2(table: str, inserted_after: da
 
 
 if __name__ == "__main__":
-    print_unique_discount_records_since_datetime2("instagram_canonical", datetime(2025, 8, 11))
+    print_unique_discount_records_since_datetime("instagram", datetime(2025, 8, 11))

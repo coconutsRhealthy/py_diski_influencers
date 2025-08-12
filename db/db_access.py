@@ -32,7 +32,7 @@ def get_records_since_datetime(table: str, inserted_after: datetime, post_date_a
 
 def _execute_query(table: str, where_clause: str, params: List[Union[date, datetime]]) -> List[Dict]:
     query = f"""
-    SELECT id, influencer_name, caption, post_url, post_date, inserted_at, ai_analysis, ai_analysis_time
+    SELECT id, influencer_name, caption, post_url, post_date, inserted_at, ai_analysis, ai_canonical, ai_analysis_time
     FROM `{table}`
     WHERE {where_clause}
     ORDER BY inserted_at ASC

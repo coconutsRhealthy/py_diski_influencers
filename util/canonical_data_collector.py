@@ -25,14 +25,7 @@ def get_webshops_to_be_identified(inserted_after: datetime):
             except json.JSONDecodeError:
                 continue  # skip bad JSON
 
-        # Case: direct dict
-        if isinstance(ai_analysis, dict):
-            webshop_name = ai_analysis.get("webshop")
-            if webshop_name:
-                webshops.add(webshop_name)
-
-        # Case: list of dicts
-        elif isinstance(ai_analysis, list):
+        if isinstance(ai_analysis, list):
             for entry in ai_analysis:
                 if isinstance(entry, dict):
                     webshop_name = entry.get("webshop")

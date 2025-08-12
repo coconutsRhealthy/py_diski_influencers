@@ -40,7 +40,7 @@ def normalize_webshops(unknown_webshops, known_webshop_keys):
     prompt_text = build_normalization_prompt(unknown_webshops, known_webshop_keys)
 
     response = client.responses.create(
-        model="gpt-5-nano",  # Or "gpt-5" for maximum accuracy
+        model="gpt-5",
         input=[{
             "role": "user",
             "content": [

@@ -17,7 +17,6 @@ def load_discounts_map():
         date = parts[-1]  # last part is date
 
         # Strip possible extra parentheses or info in canonical (like "zalando (11 aug)")
-        # Just keep the canonical name before any parentheses:
         if '(' in canonical:
             canonical = canonical.split('(')[0].strip()
 
@@ -68,6 +67,9 @@ def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_
 
         formatted_date = inserted_at.strftime("%m-%d")
 
+        # Check if this record has multiple entries in ai_analysis
+        multi_prefix = "MULTI__" if len(ai_analysis) > 1 else ""
+
         for entry in ai_analysis:
             if not isinstance(entry, dict):
                 continue
@@ -77,7 +79,7 @@ def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_
 
             lookup_key = ((ai_canonical or "unknown").lower(), (discount_code or "unknown").lower())
 
-            line = f'"{ai_canonical}, {discount_code}, {discount_percentage}, {influencer_name}, {formatted_date}",'
+            line = f'{multi_prefix}"{ai_canonical}, {discount_code}, {discount_percentage}, {influencer_name}, {formatted_date}",'
 
             if lookup_key in discounts_map:
                 discount_date = discounts_map[lookup_key]

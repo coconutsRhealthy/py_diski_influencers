@@ -20,10 +20,15 @@ def load_discounts_map():
         if '(' in canonical:
             canonical = canonical.split('(')[0].strip()
 
-        discounts_map[(canonical.lower(), code.lower())] = date
+        key = (canonical.lower(), code.lower())
+
+        # Keep the first occurrence (newest date) only
+        if key not in discounts_map:
+            discounts_map[key] = date
+
     return discounts_map
 
-def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_after: datetime):
+def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_after: datetime, print_urls_end_of_line: bool = False):
     discounts_map = load_discounts_map()
     records = get_records_since_datetime(table, inserted_after)
 
@@ -85,6 +90,11 @@ def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_
                 discount_date = discounts_map[lookup_key]
                 line = f'...{line}..........{discount_date}'
 
+            if print_urls_end_of_line:
+                post_url = record.get('post_url', '')
+                if post_url:
+                    line += f'    {post_url}'
+
             if line not in seen:
                 print(line)
                 seen.add(line)
@@ -93,4 +103,4 @@ def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_
     print(f"\nPrinted {count} unique discount records.")
 
 if __name__ == "__main__":
-    print_unique_discount_records_since_datetime_with_flag("instagram", datetime(2025, 8, 11))
+    print_unique_discount_records_since_datetime_with_flag("instagram", datetime(2025, 8, 13), True)

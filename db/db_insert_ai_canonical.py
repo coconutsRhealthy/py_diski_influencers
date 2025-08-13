@@ -2,21 +2,22 @@ import json
 from datetime import datetime
 from db.db_connection import get_database_connection
 
-def insert_ai_canonical(ai_spotted_webshop_name: str, canonical: str, since_datetime: datetime):
+def insert_ai_canonical(table: str, ai_spotted_webshop_name: str, canonical: str, since_datetime: datetime):
     with get_database_connection() as conn:
         cursor = conn.cursor(dictionary=True)
 
-        # Fetch records after the cutoff date
-        select_sql = """
+        # Fetch records after the cutoff date and where ai_canonical is NULL
+        select_sql = f"""
             SELECT id, ai_analysis
-            FROM instagram_canonical
+            FROM {table}
             WHERE inserted_at >= %s
+              AND ai_canonical IS NULL
         """
         cursor.execute(select_sql, (since_datetime,))
         records = cursor.fetchall()
 
-        update_sql = """
-            UPDATE instagram_canonical
+        update_sql = f"""
+            UPDATE {table}
             SET ai_canonical = %s
             WHERE id = %s
         """
@@ -54,6 +55,7 @@ if __name__ == "__main__":
     # Example usage
     cutoff = datetime(2025, 8, 1)
     insert_ai_canonical(
+        table="instagram",
         ai_spotted_webshop_name="aybl",
         canonical="HENK",
         since_datetime=cutoff

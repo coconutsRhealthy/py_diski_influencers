@@ -6,13 +6,16 @@ from datetime import datetime
 from ai.identify_canonical import normalize_webshops
 from db.db_access import get_records_since_datetime
 
-def get_webshops_to_be_identified(inserted_after: datetime):
-    table = "instagram"
+def get_webshops_to_be_identified(table: str, inserted_after: datetime):
     records = get_records_since_datetime(table, inserted_after)
 
     webshops = set()
 
     for record in records:
+        if record.get('ai_canonical') is not None:
+            print(f"Canonical has already been set for {record.get('id')}")
+            continue
+
         ai_analysis = record.get('ai_analysis')
 
         if not ai_analysis:
@@ -35,7 +38,8 @@ def get_webshops_to_be_identified(inserted_after: datetime):
     return list(webshops)
 
 
-def get_canonical_company_names(file_path: str) -> list:
+def get_canonical_company_names() -> list:
+    file_path = "/Users/lennartmac/Documents/Projects/diski-input-insta/src/assets/discounts.json"
     file = Path(file_path)
     if not file.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -60,11 +64,11 @@ def get_canonical_company_names(file_path: str) -> list:
 
 if __name__ == "__main__":
     cutoff_date = datetime(2025, 8, 1)
-    result = get_webshops_to_be_identified(cutoff_date)
+    result = get_webshops_to_be_identified("instagram", cutoff_date)
     #print(result)
     #print(f"Number of webshops to be identified: {len(result)}")
 
-    canonical_names = get_canonical_company_names("/Users/lennartmac/Documents/Projects/diski-input-insta/src/assets/discounts.json")
+    canonical_names = get_canonical_company_names()
     #print(canonical_names)
     #print(f"Number of unique canonical company names: {len(canonical_names)}")
 

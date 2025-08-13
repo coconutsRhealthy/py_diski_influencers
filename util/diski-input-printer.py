@@ -84,7 +84,11 @@ def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_
 
             lookup_key = ((ai_canonical or "unknown").lower(), (discount_code or "unknown").lower())
 
-            line = f'{multi_prefix}"{ai_canonical}, {discount_code}, {discount_percentage}, {influencer_name}, {formatted_date}",'
+            display_influencer_name = influencer_name
+            if table == "tiktok":
+                display_influencer_name += "_tiktok"
+
+            line = f'{multi_prefix}"{ai_canonical}, {discount_code}, {discount_percentage}, {display_influencer_name}, {formatted_date}",'
 
             if lookup_key in discounts_map:
                 discount_date = discounts_map[lookup_key]
@@ -103,4 +107,4 @@ def print_unique_discount_records_since_datetime_with_flag(table: str, inserted_
     print(f"\nPrinted {count} unique discount records.")
 
 if __name__ == "__main__":
-    print_unique_discount_records_since_datetime_with_flag("instagram", datetime(2025, 8, 13), True)
+    print_unique_discount_records_since_datetime_with_flag("tiktok", datetime(2025, 8, 13), True)

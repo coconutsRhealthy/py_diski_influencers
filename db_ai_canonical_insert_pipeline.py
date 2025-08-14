@@ -29,5 +29,5 @@ def run_pipeline(table: str, since_datetime: datetime):
 
 
 if __name__ == "__main__":
-    cutoff_date = datetime(2025, 8, 11)
-    run_pipeline("instagram", cutoff_date)
+    cutoff_date = datetime(2025, 8, 13)
+    run_pipeline("tiktok", cutoff_date)

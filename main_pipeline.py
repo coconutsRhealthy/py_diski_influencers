@@ -5,71 +5,49 @@ from db_caption_insert_pipeline import pipeline_insert_captions_in_db
 from util.new_discounts_printer import print_unique_discount_records_since_datetime
 
 
+def timed_step(description: str, func, *args, **kwargs):
+    """
+    Runs a pipeline step, prints start/finish messages, and returns the result.
+    """
+    print(f"**START {description}**")
+    start = datetime.now()
+    result = func(*args, **kwargs)
+    end = datetime.now()
+    print(f"**FINISHED {description} ({end - start})**\n")
+    return result
+
+
 def run_main_pipeline(inserted_at: date, post_date_after: datetime, cutoff_date: datetime):
-    starttime = datetime.now()
-
-    #caption inserts...
+    pipeline_start = datetime.now()
     print("**STARTING MAIN PIPELINE**")
-    print("** starttime: " + starttime + " **")
+    print(f"Start time: {pipeline_start.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-    print()
-    print("**START INSERTING CAPTIONS**")
-    print("**start inserting instagram user captions**")
-    pipeline_insert_captions_in_db("instagram")
-    print("**finished inserting instagram user captions**")
-    print()
-    print("**start inserting instagram_mention captions**")
-    pipeline_insert_captions_in_db("instagram_mention")
-    print("**finished inserting instagram_mention captions**")
-    print()
-    print("**start inserting tiktok captions**")
-    pipeline_insert_captions_in_db("tiktok")
-    print("**finished inserting tiktok captions**")
+    # --- Captions ---
+    timed_step("Instagram captions", pipeline_insert_captions_in_db, "instagram")
+    timed_step("Instagram mention captions", pipeline_insert_captions_in_db, "instagram_mention")
+    timed_step("TikTok captions", pipeline_insert_captions_in_db, "tiktok")
 
-    print("\n" * 5)
+    # --- AI analysis ---
+    timed_step("Instagram AI analysis", pipeline_insert_ai_analysis_in_db, "instagram", inserted_at, post_date_after)
+    timed_step("TikTok AI analysis", pipeline_insert_ai_analysis_in_db, "tiktok", inserted_at, post_date_after)
 
-    #ai analysis...
-    print("**START INSERTING AI ANALYSIS**")
-    print("**start inserting instagram ai analysis**")
-    pipeline_insert_ai_analysis_in_db("instagram", inserted_at, post_date_after)
-    print("**finished inserting instagram ai analysis**")
-    print("**start inserting tiktok ai analysis**")
-    pipeline_insert_ai_analysis_in_db("tiktok", inserted_at, post_date_after)
-    print("**finished inserting tiktok ai analysis**")
+    # --- AI canonical analysis ---
+    timed_step("Instagram AI canonical analysis", pipeline_insert_ai_canonical_in_db, "instagram", cutoff_date)
+    timed_step("TikTok AI canonical analysis", pipeline_insert_ai_canonical_in_db, "tiktok", cutoff_date)
 
-    print("\n" * 5)
-
-    #ai canonical...
-    print("**START INSERTING AI CANONICAL ANALYSIS**")
-    print("**start inserting instagram ai canonical analysis**")
-    pipeline_insert_ai_canonical_in_db("instagram", cutoff_date)
-    print("**finished inserting instagram ai canonical analysis**")
-    print("**start inserting tiktok ai canonical analysis**")
-    pipeline_insert_ai_canonical_in_db("tiktok", cutoff_date)
-    print("**finished inserting tiktok ai canonical analysis**")
-
-    print("\n" * 8)
-
-    #print results...
+    # --- Print results ---
     print("**PRINTING RESULTS**")
     print("**instagram results:**")
     print_unique_discount_records_since_datetime("instagram", cutoff_date, True)
-
     print("\n" * 5)
-
     print("**tiktok results:**")
     print_unique_discount_records_since_datetime("tiktok", cutoff_date, True)
-
     print("\n" * 5)
-    print("**FINISHED MAIN PIPELINE**")
-    print()
 
-    endtime = datetime.now()
-    duration = endtime - starttime
-    print(f"Start time: {starttime.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"End time:   {endtime.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Duration:   {duration}")
-
+    pipeline_end = datetime.now()
+    print("\n**FINISHED MAIN PIPELINE**")
+    print(f"End time:   {pipeline_end.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Total duration: {pipeline_end - pipeline_start}")
 
 
 if __name__ == "__main__":

@@ -4,11 +4,11 @@ from util.read_json_tiktok import read_tiktok_json_data
 from db.db_insert_captions import insert_records
 from util.captions_util import normalize_caption, check_keywords_in_caption
 
-def main(platform):
+def pipeline_insert_captions_in_db(platform):
     if platform == "instagram":
         user_posts = read_insta_json_data()
-        # user_posts = read_insta_mentioned_json_data()
     elif platform == "instagram_mention":
+        platform = "instagram"
         user_posts = read_insta_mentioned_json_data()
     elif platform == "tiktok":
         user_posts = read_tiktok_json_data()
@@ -32,4 +32,4 @@ def main(platform):
     print(f"Inserted {len(records)} {platform} records.")
 
 if __name__ == "__main__":
-    main("instagram")
+    pipeline_insert_captions_in_db("instagram")

@@ -6,7 +6,7 @@ from db.db_insert_ai_canonical import insert_ai_canonical
 from util.canonical_data_collector import get_webshops_to_be_identified, get_canonical_company_names
 
 
-def run_pipeline(table: str, since_datetime: datetime):
+def pipeline_insert_ai_canonical_in_db(table: str, since_datetime: datetime):
     # Step 1: Get unknown webshops from DB
     unknown_webshops = get_webshops_to_be_identified(table, since_datetime)
     print(f"Found {len(unknown_webshops)} unknown webshop(s) since {since_datetime.date()}")

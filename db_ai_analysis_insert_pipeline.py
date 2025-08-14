@@ -3,7 +3,7 @@ from db.db_access import get_records_for_date
 from ai.extract_discount_codes import extract_discount_codes
 from db.db_insert_ai_analysis import insert_ai_analysis
 
-def run_pipeline(table: str, inserted_at: date, post_date_after: datetime = None):
+def pipeline_insert_ai_analysis_in_db(table: str, inserted_at: date, post_date_after: datetime = None):
     records = get_records_for_date(table, inserted_at, post_date_after)
 
     print(f"[{table.upper()}] Found {len(records)} records to process...")
@@ -39,4 +39,4 @@ if __name__ == "__main__":
 
     # Example runs
     # run_pipeline("instagram", inserted_at, post_date_after)
-    run_pipeline("tiktok", inserted_at, post_date_after)
+    pipeline_insert_ai_analysis_in_db("tiktok", inserted_at, post_date_after)

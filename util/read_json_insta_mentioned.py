@@ -2,17 +2,32 @@ from apify_client import ApifyClient
 import os
 
 
-def load_username_input():
+def load_username_input(size: str):
     with open("util/apify_input/instagram_mentioned.txt", "r", encoding="utf-8") as f:
-        username_input = [line.strip() for line in f if line.strip()]
-    return username_input
+        lines = [line.strip() for line in f if line.strip()]
 
-def fetch_insta_mentioned_json_data(username_input):
+    usernames = []
+    capture = False
+    for line in lines:
+        if line.lower() == f"{size}:":
+            capture = True
+            continue
+        elif line.endswith(":"):
+            capture = False
+
+        if capture:
+            usernames.append(line)
+
+    return usernames
+
+def fetch_insta_mentioned_json_data(username_input, size: str):
     apify_token = os.environ.get("APIFY_TOKEN", "secret")
     client = ApifyClient(apify_token)
 
+    results_limit = 50 if size == "big" else 10
+
     run_input = {
-        "resultsLimit": 10,
+        "resultsLimit": results_limit,
         "username": username_input,
     }
 
@@ -23,9 +38,12 @@ def fetch_insta_mentioned_json_data(username_input):
     return dataset_items
 
 
-def read_insta_mentioned_json_data():
-    direct_urls = load_username_input()
-    data = fetch_insta_mentioned_json_data(direct_urls)
+def read_insta_mentioned_json_data(size: str):
+    if size not in ("small", "big"):
+        raise ValueError("size must be either 'small' or 'big'")
+
+    usernames = load_username_input(size)
+    data = fetch_insta_mentioned_json_data(usernames, size)
 
     mentioned_posts = {}
 
@@ -53,5 +71,5 @@ def read_insta_mentioned_json_data():
     return mentioned_posts
 
 if __name__ == "__main__":
-    mentioned_posts = read_insta_mentioned_json_data()
+    mentioned_posts = read_insta_mentioned_json_data("small")
     print(mentioned_posts)

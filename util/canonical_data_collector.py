@@ -6,6 +6,11 @@ from datetime import datetime
 from ai.identify_canonical import normalize_webshops
 from db.db_access import get_records_since_datetime
 
+def get_canonical_company_names() -> list:
+    company_names = get_canonical_company_names_from_discounts_json()
+    company_names.update(get_canonical_company_names_from_affiliate_service_file())
+    return sorted(company_names)
+
 def get_webshops_to_be_identified(table: str, inserted_after: datetime):
     records = get_records_since_datetime(table, inserted_after)
 
@@ -38,7 +43,7 @@ def get_webshops_to_be_identified(table: str, inserted_after: datetime):
     return list(webshops)
 
 
-def get_canonical_company_names() -> list:
+def get_canonical_company_names_from_discounts_json() -> set:
     file_path = "/Users/lennartmac/Documents/Projects/diski-input-insta/src/assets/discounts.json"
     file = Path(file_path)
     if not file.exists():
@@ -60,7 +65,26 @@ def get_canonical_company_names() -> list:
         if company:
             company_names.add(company)
 
-    return sorted(company_names)
+    return company_names
+
+def get_canonical_company_names_from_affiliate_service_file() -> set:
+    """Lees canonical names uit het affiliate-bestand"""
+    file_path = "/Users/lennartmac/Documents/Projects/light19/src/app/services/affiliate-link.service.ts"
+    file = Path(file_path)
+    if not file.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    # Bestand lezen
+    with file.open("r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Regex om de sleutels van affiliateLinks te vinden
+    # Matcht "BedrijfsNaam": ...
+    #matches = re.findall(r'["\']([\w\s\.\-&]+)["\']\s*:', content)
+    matches = re.findall(r'["\']([^"\']+)["\']\s*:', content)
+
+    company_names = set(matches)
+    return company_names
 
 if __name__ == "__main__":
     cutoff_date = datetime(2025, 8, 1)

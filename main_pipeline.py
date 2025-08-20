@@ -53,8 +53,9 @@ def run_main_pipeline(inserted_at: date, post_date_after: datetime, cutoff_date:
 if __name__ == "__main__":
     #are input .txt files OK?
     #all api keys present?
+    #staat discounts.json in juiste vorm?
 
-    inserted_at = date(2025, 8, 13)
+    inserted_at = date(2025, 8, 18)
     post_date_after = datetime.now() - timedelta(days=3)
-    cutoff_date = datetime(2025, 8, 13)
+    cutoff_date = datetime(2025, 8, 18)
     run_main_pipeline(inserted_at, post_date_after, cutoff_date)

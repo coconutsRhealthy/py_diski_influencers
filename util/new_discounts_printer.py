@@ -50,7 +50,7 @@ def print_unique_discount_records_since_datetime(table: str, inserted_after: dat
             if isinstance(ai_analysis_json, list):
                 for entry in ai_analysis_json:
                     if isinstance(entry, dict) and entry.get("webshop"):
-                        webshop_name = entry.get("webshop").upper()
+                        webshop_name = "___" + entry.get("webshop").replace(" ", "").lower()
                         break
             ai_canonical = webshop_name or "UNKNOWN"
 

@@ -19,6 +19,11 @@ Extract all discount codes from the following Instagram caption. For each code, 
 - the discount code itself (as "code"),
 - and the percentage off (as "percentage", if mentioned).
 
+Important notes about "percentage":
+- Usually this is a percentage off (e.g., 20% → percentage=20).
+- Sometimes it is an amount in euros (e.g., €10 korting → percentage=€10).
+- If the caption does not explicitly mention a discount, look at the code itself and see if you can reasonably infer the percentage from it (e.g., SUMMER20 → 20, HANNAH15 → 15).
+
 Return only raw JSON in this format:
 [
   {{

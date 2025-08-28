@@ -1,4 +1,5 @@
 from apify_client import ApifyClient
+from dotenv import load_dotenv
 import os
 
 def load_tiktok_usernames():
@@ -7,7 +8,7 @@ def load_tiktok_usernames():
     return tiktok_usernames
 
 def fetch_insta_json_data(tiktok_usernames):
-    apify_token = os.environ.get("APIFY_TOKEN", "secret")
+    apify_token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(apify_token)
 
     run_input = {
@@ -69,5 +70,6 @@ def read_tiktok_json_data():
     return user_posts
 
 if __name__ == "__main__":
+    load_dotenv()
     posts = read_tiktok_json_data()
     print(posts)

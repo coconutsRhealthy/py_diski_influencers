@@ -1,4 +1,5 @@
 from apify_client import ApifyClient
+from dotenv import load_dotenv
 import os
 
 def load_direct_urls():
@@ -7,7 +8,7 @@ def load_direct_urls():
     return urls
 
 def fetch_insta_json_data(direct_urls):
-    apify_token = os.environ.get("APIFY_TOKEN", "secret")
+    apify_token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(apify_token)
 
     run_input = {
@@ -60,6 +61,7 @@ def read_insta_json_data():
     return user_posts
 
 if __name__ == "__main__":
+    load_dotenv()
     user_posts = read_insta_json_data()
 
     for username, posts in user_posts.items():

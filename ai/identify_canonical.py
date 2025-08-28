@@ -1,7 +1,9 @@
 from openai import OpenAI
+from dotenv import load_dotenv
 import json
+import os
 
-client = OpenAI(api_key="secret")
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 
 def build_normalization_prompt(unknown_webshops, known_webshop_keys):
@@ -61,6 +63,7 @@ def normalize_webshops(unknown_webshops, known_webshop_keys):
 
 
 if __name__ == "__main__":
+    load_dotenv()
     unknowns = ["NA-KD", "ZalandoNL", "Hm", "NonExistingShop", "Emma"]
     known_keys = ["nakdfashion", "emmasleepnl", "zalando", "hm", "asos"]
 

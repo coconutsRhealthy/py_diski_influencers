@@ -1,8 +1,11 @@
 import time
+from dotenv import load_dotenv
+import os
+
 from openai import OpenAI
 
-# Zet hier je eigen OpenAI API key
-client = OpenAI(api_key="secret")
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 num_tests = 10
 latencies = []

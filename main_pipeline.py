@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from dotenv import load_dotenv
 from db_ai_analysis_insert_pipeline import pipeline_insert_ai_analysis_in_db
 from db_ai_canonical_insert_pipeline import pipeline_insert_ai_canonical_in_db
 from db_caption_insert_pipeline import pipeline_insert_captions_in_db
@@ -55,7 +56,8 @@ if __name__ == "__main__":
     #all api keys present?
     #staat discounts.json in juiste vorm?
 
-    inserted_at = date(2025, 8, 18)
+    load_dotenv()
+    inserted_at = date(2025, 8, 27)
     post_date_after = datetime.now() - timedelta(days=3)
-    cutoff_date = datetime(2025, 8, 18)
+    cutoff_date = datetime(2025, 8, 27)
     run_main_pipeline(inserted_at, post_date_after, cutoff_date)

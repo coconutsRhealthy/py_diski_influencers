@@ -1,8 +1,10 @@
 from openai import OpenAI
+from dotenv import load_dotenv
 import json
+import os
 
 # Initialize OpenAI client with API key
-client = OpenAI(api_key="secret")
+client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 def read_captions(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
@@ -69,6 +71,7 @@ def extract_discount_codes(captions_text):
         return None
 
 if __name__ == "__main__":
+    load_dotenv()
     captions_file = "captions.txt"
     captions = read_captions(captions_file)
 

@@ -1,4 +1,5 @@
 from apify_client import ApifyClient
+from dotenv import load_dotenv
 import os
 
 
@@ -21,7 +22,7 @@ def load_username_input(size: str):
     return usernames
 
 def fetch_insta_mentioned_json_data(username_input, size: str):
-    apify_token = os.environ.get("APIFY_TOKEN", "secret")
+    apify_token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(apify_token)
 
     results_limit = 50 if size == "big" else 10
@@ -71,5 +72,6 @@ def read_insta_mentioned_json_data(size: str):
     return mentioned_posts
 
 if __name__ == "__main__":
+    load_dotenv()
     mentioned_posts = read_insta_mentioned_json_data("small")
     print(mentioned_posts)

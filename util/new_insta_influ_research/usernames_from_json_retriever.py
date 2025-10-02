@@ -1,29 +1,42 @@
 import json
+from pathlib import Path
 
-def get_usernames_from_json():
-    filepath = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned/2025/mei/21mei_big.json"
+def get_usernames_from_jsons(directory_path):
+    directory = Path(directory_path)
 
-    # JSON inladen
-    with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    # De merken waar je op wilt filteren
+    brands = {"myjewellery"}
 
-    unique_usernames = set()
+    # Dictionary: username -> set(brands)
+    usernames_with_brands = {}
 
-    for record in data:
-        username = record.get('ownerUsername')
-        if not username:
-            continue  # skip records zonder username
+    # Recursief alle JSON-bestanden vinden
+    for json_file in directory.rglob("*.json"):
+        with open(json_file, 'r', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Fout bij inladen van {json_file}, wordt overgeslagen")
+                continue
 
-        mentions = record.get('mentions', [])
+        for record in data:
+            username = record.get('ownerUsername')
+            if not username:
+                continue
 
-        if 'gutsgusto' in mentions:
-            unique_usernames.add(username)
+            mentions = record.get('mentions', [])
+            matched_brands = brands.intersection(mentions)
 
-    # Zet om naar een lijst en sorteer alfabetisch
-    sorted_usernames = sorted(unique_usernames)
+            if matched_brands:
+                if username not in usernames_with_brands:
+                    usernames_with_brands[username] = set()
+                usernames_with_brands[username].update(matched_brands)
 
-    for username in sorted_usernames:
-        print(username)
+    # Sorteer usernames alfabetisch en nummer ze
+    for i, username in enumerate(sorted(usernames_with_brands), start=1):
+        brands_list = sorted(usernames_with_brands[username])  # lijstje voor nette output
+        print(f"{i}. {username}: {brands_list}")
 
 if __name__ == "__main__":
-    get_usernames_from_json()
+    folder_path = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned/2025"
+    get_usernames_from_jsons(folder_path)

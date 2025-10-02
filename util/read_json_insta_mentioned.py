@@ -22,6 +22,7 @@ def load_username_input(size: str):
     return usernames
 
 def fetch_insta_mentioned_json_data(username_input, size: str):
+    load_dotenv()
     apify_token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(apify_token)
 

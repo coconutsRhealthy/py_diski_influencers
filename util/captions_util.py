@@ -48,6 +48,7 @@ def check_keywords_in_caption(caption):
         "remise",
         "réduction",
         "reduction",
+        "spart",
     ]
     caption_lower = caption.lower()
     return any(keyword.lower() in caption_lower for keyword in keywords)

@@ -8,6 +8,7 @@ def load_direct_urls():
     return urls
 
 def fetch_insta_json_data(direct_urls):
+    load_dotenv()
     apify_token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(apify_token)
 

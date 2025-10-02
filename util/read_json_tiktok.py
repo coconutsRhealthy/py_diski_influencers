@@ -8,6 +8,7 @@ def load_tiktok_usernames():
     return tiktok_usernames
 
 def fetch_insta_json_data(tiktok_usernames):
+    load_dotenv()
     apify_token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(apify_token)
 

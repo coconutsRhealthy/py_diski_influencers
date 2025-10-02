@@ -4,6 +4,7 @@ import json
 import os
 
 # Initialize OpenAI client with API key
+load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 def read_captions(file_path):

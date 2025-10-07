@@ -1,9 +1,33 @@
+import sys
+from pathlib import Path
 from datetime import date, datetime, timedelta
 from dotenv import load_dotenv
 from db_ai_analysis_insert_pipeline import pipeline_insert_ai_analysis_in_db
 from db_ai_canonical_insert_pipeline import pipeline_insert_ai_canonical_in_db
 from db_caption_insert_pipeline import pipeline_insert_captions_in_db
 from util.new_discounts_printer import print_unique_discount_records_since_datetime
+
+# --- Logbestand setup ---
+log_folder = Path("logs")
+log_folder.mkdir(parents=True, exist_ok=True)
+log_file = log_folder / f"main_pipeline_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
+
+# --- Tee class om print() naar console én logbestand te sturen ---
+class Tee:
+    def __init__(self, *files):
+        self.files = files
+
+    def write(self, data):
+        for f in self.files:
+            f.write(data)
+            f.flush()
+
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
+# --- Redirect stdout ---
+sys.stdout = Tee(sys.stdout, open(log_file, "w", encoding="utf-8"))
 
 
 def timed_step(description: str, func, *args, **kwargs):
@@ -58,7 +82,7 @@ if __name__ == "__main__":
     #staan de datums hier goed??
 
     load_dotenv()
-    inserted_at = date(2025, 10, 1)
+    inserted_at = date(2025, 10, 6)
     post_date_after = datetime.now() - timedelta(days=3)
-    cutoff_date = datetime(2025, 10, 1)
+    cutoff_date = datetime(2025, 10, 6)
     run_main_pipeline(inserted_at, post_date_after, cutoff_date)

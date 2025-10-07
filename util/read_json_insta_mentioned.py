@@ -1,6 +1,9 @@
 from apify_client import ApifyClient
 from dotenv import load_dotenv
+from pathlib import Path
+from datetime import datetime
 import os
+import json
 
 
 def load_username_input(size: str):
@@ -39,6 +42,18 @@ def fetch_insta_mentioned_json_data(username_input, size: str):
 
     return dataset_items
 
+def save_json_to_file(data, size: str):
+    folder = Path("/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned/apify_api_jsons")
+    folder.mkdir(parents=True, exist_ok=True)  # map aanmaken als die nog niet bestaat
+
+    date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"mentioned_posts_{size}_{date_str}.json"
+    filepath = folder / filename
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    print(f"Data opgeslagen in {filepath}")
 
 def read_insta_mentioned_json_data(size: str):
     if size not in ("small", "big"):
@@ -69,6 +84,11 @@ def read_insta_mentioned_json_data(size: str):
             mentioned_posts[username] = []
 
         mentioned_posts[username].append(post_info)
+
+    try:
+        save_json_to_file(mentioned_posts, size)
+    except Exception as e:
+        print(f"Error saving JSON: {e}")
 
     return mentioned_posts
 

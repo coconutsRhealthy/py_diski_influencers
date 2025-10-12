@@ -88,3 +88,13 @@ if __name__ == "__main__":
     print(f"In DB: {total_in_db}")
     print(f"Niet in DB: {total_not_in_db}")
     print(f"Percentage niet in DB: {percent_not_in_db:.2f}%")
+
+    # --- NIEUW GEDEELTE: schrijf alleen usernames die NIET in de DB staan ---
+    output_file = Path("filtered_usernames_not_in_db7.txt")
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        for username in sorted(filtered_usernames):
+            if not db_results[username]:  # alleen als ze niet in de database staan
+                f.write(f"https://www.instagram.com/{username}\n")
+
+    print(f"\nUsernames die niet in de database staan zijn opgeslagen in: {output_file.resolve()}")

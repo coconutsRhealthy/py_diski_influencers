@@ -40,6 +40,11 @@ def fetch_insta_mentioned_json_data(username_input, size: str):
 
     dataset_items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
 
+    try:
+        save_json_to_file(dataset_items, size)
+    except Exception as e:
+        print(f"Error saving JSON: {e}")
+
     return dataset_items
 
 def save_json_to_file(data, size: str):
@@ -84,11 +89,6 @@ def read_insta_mentioned_json_data(size: str):
             mentioned_posts[username] = []
 
         mentioned_posts[username].append(post_info)
-
-    try:
-        save_json_to_file(mentioned_posts, size)
-    except Exception as e:
-        print(f"Error saving JSON: {e}")
 
     return mentioned_posts
 

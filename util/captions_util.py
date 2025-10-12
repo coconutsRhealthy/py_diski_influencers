@@ -13,11 +13,17 @@ def normalize_caption(caption):
     # Normalize unicode (e.g., é -> é)
     normalized = unicodedata.normalize("NFKD", caption)
 
-    # Remove emojis and control characters
-    cleaned = "".join(c for c in normalized if c.isprintable() and not unicodedata.category(c).startswith("C"))
+    # Remove emojis and control characters, except for \n
+    cleaned = "".join(
+        c for c in normalized
+        if (c.isprintable() or c == '\n') and (c == '\n' or not unicodedata.category(c).startswith("C"))
+    )
 
-    # Collapse multiple spaces
-    return re.sub(r'\s+', ' ', cleaned).strip()
+    # Collapse multiple spaces maar behoud \n
+    cleaned = re.sub(r'[ \t]+', ' ', cleaned)  # alleen spaties/tabs samenvoegen, geen newlines strippen
+
+    # Strip alleen aan de randen (niet binnenin)
+    return cleaned.strip()
 
 def check_keywords_in_caption(caption):
     keywords = [

@@ -1,13 +1,13 @@
 import json
 from pathlib import Path
 import mysql.connector
+import random
 
 def get_usernames_from_jsons(directory_path):
     directory = Path(directory_path)
     brands = {
         "gutsgusto",
         "loavies",
-        "myjewellery",
         "getdrezzed",
         "begoldennl",
         "mimamsterdam",
@@ -90,11 +90,22 @@ if __name__ == "__main__":
     print(f"Percentage niet in DB: {percent_not_in_db:.2f}%")
 
     # --- NIEUW GEDEELTE: schrijf alleen usernames die NIET in de DB staan ---
-    output_file = Path("filtered_usernames_not_in_db7.txt")
+    output_file = Path("filtered_usernames_not_in_db8.txt")
 
+    # Maak lijst van usernames die niet in de DB staan
+    usernames_not_in_db = [u for u in sorted(filtered_usernames) if not db_results[u]]
+
+    # Parameter: hoeveel random usernames wil je opslaan?
+    sample_size = 251
+    if sample_size > len(usernames_not_in_db):
+        sample_size = len(usernames_not_in_db)  # voorkom fout bij te grote sample
+
+    # Kies random subset
+    random_sample = random.sample(usernames_not_in_db, sample_size)
+
+    # Schrijf naar bestand
     with open(output_file, "w", encoding="utf-8") as f:
-        for username in sorted(filtered_usernames):
-            if not db_results[username]:  # alleen als ze niet in de database staan
-                f.write(f"https://www.instagram.com/{username}\n")
+        for username in random_sample:
+            f.write(f"https://www.instagram.com/{username}\n")
 
-    print(f"\nUsernames die niet in de database staan zijn opgeslagen in: {output_file.resolve()}")
+    print(f"\n{sample_size} random gekozen usernames (van de {len(usernames_not_in_db)} die niet in DB staan) zijn opgeslagen in: {output_file.resolve()}")

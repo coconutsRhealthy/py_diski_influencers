@@ -63,7 +63,7 @@ def check_usernames_in_mysql(usernames):
 
 
 if __name__ == "__main__":
-    folder_path = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned/2025"
+    folder_path = "/Users/LennartMac/Documents/Projects/python/py_diski_influencers/jsons/insta/mentioned"
     min_brands = 1  # <-- Pas dit aan: minimaal aantal merken per username
 
     usernames_with_brands = get_usernames_from_jsons(folder_path)
@@ -90,13 +90,13 @@ if __name__ == "__main__":
     print(f"Percentage niet in DB: {percent_not_in_db:.2f}%")
 
     # --- NIEUW GEDEELTE: schrijf alleen usernames die NIET in de DB staan ---
-    output_file = Path("filtered_usernames_not_in_db8.txt")
+    output_file = Path("filtered_usernames_not_in_db10zzzzzzzaaa10.txt")
 
     # Maak lijst van usernames die niet in de DB staan
     usernames_not_in_db = [u for u in sorted(filtered_usernames) if not db_results[u]]
 
     # Parameter: hoeveel random usernames wil je opslaan?
-    sample_size = 251
+    sample_size = 240
     if sample_size > len(usernames_not_in_db):
         sample_size = len(usernames_not_in_db)  # voorkom fout bij te grote sample
 

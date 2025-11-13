@@ -135,7 +135,7 @@ def main():
     min_brands = 1
     max_total = 1345
     input_file_path = "../apify_input/instagram_user_urls.txt"
-    output_file = Path("filtered_usernames_not_in_db_added.txt")
+    output_file = Path("txt/filtered_usernames_not_in_db_added.txt")
 
     print("🔍 JSON-bestanden worden geanalyseerd...")
     usernames_with_brands = get_usernames_from_jsons(folder_path)

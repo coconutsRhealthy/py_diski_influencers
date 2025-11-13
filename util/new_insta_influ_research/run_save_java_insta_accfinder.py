@@ -45,7 +45,7 @@ def save_output_to_file(output_text: str):
         if i >= 10:
             break
 
-if __name__ == "__main__":
+def main():
     print("🟢 Script gestart\n")
 
     java_output = run_java_class()
@@ -54,3 +54,6 @@ if __name__ == "__main__":
     save_output_to_file(java_output)
 
     print("\n🎉 Script voltooid!")
+
+if __name__ == "__main__":
+    main()

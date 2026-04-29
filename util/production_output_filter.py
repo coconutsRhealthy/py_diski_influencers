@@ -22,7 +22,7 @@ ARCHIVE_TXT_PATH = Path(
 )
 ARCHIVE_BATCH_LIMIT = 120
 MIN_TRAINING_BATCH_SIZE = 20
-LOW_PRIORITY_BRANDS = {
+BOOSTED_BRANDS = {
     "temu",
     "bylashbabe",
     "idealofsweden",
@@ -33,11 +33,15 @@ LOW_PRIORITY_BRANDS = {
     "hellofresh.nl",
     "rosental-organics.nl",
 }
-LOW_PRIORITY_BASE_SCORE = 4.0
+BOOSTED_BASE_SCORE = 4.0
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = PROJECT_ROOT / "logs/raw_output_for_day/testoutput.txt"
+LOGS_DIR = PROJECT_ROOT / "logs"
 DEFAULT_OUTPUT = PROJECT_ROOT / "logs/raw_output_for_day/testoutput_production.txt"
+
+PRINTING_RESULTS_MARKER = "**PRINTING RESULTS**"
+PIPELINE_END_MARKER = "**FINISHED MAIN PIPELINE**"
+PRINTED_SUMMARY_RE = re.compile(r"^Printed \d+ unique discount records\.\s*$")
 
 PREV_SEEN_DATE_RE = re.compile(r"\.{10}(\d{2})-(\d{2})")
 QUOTED_FIELDS_RE = re.compile(r'"([^"]*)"')
@@ -191,6 +195,33 @@ def filter_lines(lines, today: date, recent_weeks: int):
     )
 
 
+def find_latest_log() -> Optional[Path]:
+    candidates = sorted(LOGS_DIR.glob("main_pipeline_*.log"))
+    return candidates[-1] if candidates else None
+
+
+def extract_lines_from_log(log_path: Path) -> List[str]:
+    raw_lines = log_path.read_text(encoding="utf-8").splitlines()
+    out: List[str] = []
+    in_results = False
+    for line in raw_lines:
+        stripped = line.strip()
+        if not in_results:
+            if stripped == PRINTING_RESULTS_MARKER:
+                in_results = True
+            continue
+        if stripped == PIPELINE_END_MARKER:
+            break
+        if not stripped:
+            continue
+        if stripped.startswith("**") and stripped.endswith("**"):
+            continue
+        if PRINTED_SUMMARY_RE.match(stripped):
+            continue
+        out.append(line)
+    return out
+
+
 def line_to_brand(line: str) -> str:
     payload = line[len(REVIEW_MARKER):] if line.startswith(REVIEW_MARKER) else line
     match = QUOTED_FIELDS_RE.search(payload)
@@ -296,8 +327,8 @@ def sort_kept_lines(
     unique_brands = [b for _, b in primary if b]
     avg = compute_brand_avg_positions(unique_brands, training_batches)
     for brand in unique_brands:
-        if brand in LOW_PRIORITY_BRANDS:
-            avg[brand] = LOW_PRIORITY_BASE_SCORE + rng.random()
+        if brand in BOOSTED_BRANDS:
+            avg[brand] = BOOSTED_BASE_SCORE + rng.random()
 
     sortable: List[Tuple[str, str]] = []
     new_companies: List[Tuple[str, str]] = []
@@ -355,7 +386,18 @@ def main():
     parser = argparse.ArgumentParser(
         description="Filter main_pipeline raw output into a production-ready txt."
     )
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help="Plain-text file with raw record lines. If omitted, the latest main_pipeline log is used.",
+    )
+    parser.add_argument(
+        "--log",
+        type=Path,
+        default=None,
+        help="Specific main_pipeline_*.log to extract from (overrides auto-pick).",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--recent-weeks",
@@ -373,7 +415,16 @@ def main():
     args = parser.parse_args()
 
     today = date.today()
-    lines = args.input.read_text(encoding="utf-8").splitlines()
+
+    if args.input is not None:
+        source = args.input
+        lines = source.read_text(encoding="utf-8").splitlines()
+    else:
+        log_path = args.log if args.log is not None else find_latest_log()
+        if log_path is None:
+            parser.error(f"No main_pipeline_*.log found in {LOGS_DIR}. Use --input or --log.")
+        source = log_path
+        lines = extract_lines_from_log(log_path)
     (
         kept,
         dropped_recent,
@@ -399,7 +450,7 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
 
-    print(f"Input : {args.input} ({len(lines)} lines)")
+    print(f"Input : {source} ({len(lines)} lines)")
     print(f"Output: {args.output} ({len(kept)} lines)")
     print(
         f"Dropped {len(dropped_recent)} '...' line(s) with previous-seen date < {args.recent_weeks} week(s) ago"

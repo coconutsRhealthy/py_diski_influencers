@@ -12,7 +12,18 @@ BRAND_DEFAULT_DISCOUNT_VALUES = {
 }
 PERCENT_REVIEW_THRESHOLD = 40
 EURO_REVIEW_THRESHOLD = 100
-REVIEW_MARKER = "REVIEW__"
+REVIEW_PREFIX = "REVIEW_"
+REVIEW_HIGH = "REVIEW_HIGH__"
+REVIEW_MULTI = "REVIEW_MULTI__"
+REVIEW_HIGH_MULTI = "REVIEW_HIGH_MULTI__"
+
+IGNORED_BRANDS = {
+    "hellofresh.nl",
+    "aybl",
+    "esn",
+    "gymshark",
+    "achateshop.com",
+}
 
 DISCOUNTS_JSON_PATH = Path(
     "/Users/lennartmac/Documents/Projects/diski-input-insta/src/assets/discounts.json"
@@ -74,6 +85,30 @@ def should_drop_unknown_brand(line: str) -> bool:
     return '"UNKNOWN,' in line
 
 
+def should_drop_ignored_brand(line: str) -> bool:
+    match = QUOTED_FIELDS_RE.search(line)
+    if not match:
+        return False
+    fields = [f.strip() for f in match.group(1).split(",")]
+    if not fields:
+        return False
+    brand = fields[0].lstrip("_").lower()
+    return brand in IGNORED_BRANDS
+
+
+def is_review_line(line: str) -> bool:
+    return line.startswith(REVIEW_PREFIX)
+
+
+def strip_review_prefix(line: str) -> str:
+    if not is_review_line(line):
+        return line
+    idx = line.find("__")
+    if idx == -1:
+        return line
+    return line[idx + 2:]
+
+
 def should_drop_missing_code(line: str) -> bool:
     match = QUOTED_FIELDS_RE.search(line)
     if not match:
@@ -114,8 +149,8 @@ def process_discount_value(line: str):
 
     new_inner = ", ".join(parts)
     new_line = line.replace(f'"{inner}"', f'"{new_inner}"', 1)
-    if action == "marked" and not new_line.startswith(REVIEW_MARKER):
-        new_line = REVIEW_MARKER + new_line
+    if action == "marked" and not is_review_line(new_line):
+        new_line = REVIEW_HIGH + new_line
     return new_line, action
 
 
@@ -140,16 +175,20 @@ def filter_lines(lines, today: date, recent_weeks: int):
     kept = []
     dropped_recent = []
     dropped_unknown = []
+    dropped_ignored = []
     dropped_missing_code = []
     stripped_old_repost = 0
     cleaned_new_company = 0
     defaulted_discount = 0
-    marked_review = 0
+    marked_high = 0
+    marked_multi = 0
     dropped_multi_dup = []
     multi_seen_urls = set()
     for line in lines:
         if should_drop_unknown_brand(line):
             dropped_unknown.append(line)
+        elif should_drop_ignored_brand(line):
+            dropped_ignored.append(line)
         elif should_drop_missing_code(line):
             dropped_missing_code.append(line)
         elif should_drop_recent_repost(line, today, recent_weeks):
@@ -166,7 +205,7 @@ def filter_lines(lines, today: date, recent_weeks: int):
             if action == "defaulted":
                 defaulted_discount += 1
             elif action == "marked":
-                marked_review += 1
+                marked_high += 1
 
             if "MULTI__" in line:
                 url_match = URL_RE.search(line)
@@ -176,9 +215,11 @@ def filter_lines(lines, today: date, recent_weeks: int):
                     continue
                 if url:
                     multi_seen_urls.add(url)
-                if not line.startswith(REVIEW_MARKER):
-                    line = REVIEW_MARKER + line
-                    marked_review += 1
+                if line.startswith(REVIEW_HIGH):
+                    line = REVIEW_HIGH_MULTI + line[len(REVIEW_HIGH):]
+                elif not is_review_line(line):
+                    line = REVIEW_MULTI + line
+                marked_multi += 1
                 line = line.replace("MULTI__", "", 1)
 
             kept.append(line)
@@ -186,12 +227,14 @@ def filter_lines(lines, today: date, recent_weeks: int):
         kept,
         dropped_recent,
         dropped_unknown,
+        dropped_ignored,
         dropped_missing_code,
         dropped_multi_dup,
         stripped_old_repost,
         cleaned_new_company,
         defaulted_discount,
-        marked_review,
+        marked_high,
+        marked_multi,
     )
 
 
@@ -223,7 +266,7 @@ def extract_lines_from_log(log_path: Path) -> List[str]:
 
 
 def line_to_brand(line: str) -> str:
-    payload = line[len(REVIEW_MARKER):] if line.startswith(REVIEW_MARKER) else line
+    payload = strip_review_prefix(line)
     match = QUOTED_FIELDS_RE.search(payload)
     if not match:
         return ""
@@ -361,7 +404,7 @@ def strip_urls_from_non_review(lines: List[str]) -> Tuple[List[str], int]:
     cleaned = []
     stripped_count = 0
     for line in lines:
-        if line.startswith(REVIEW_MARKER):
+        if is_review_line(line):
             cleaned.append(line)
             continue
         new_line = URL_RE.sub("", line).rstrip()
@@ -369,6 +412,31 @@ def strip_urls_from_non_review(lines: List[str]) -> Tuple[List[str], int]:
             stripped_count += 1
         cleaned.append(new_line)
     return cleaned, stripped_count
+
+
+def dedup_by_brand_code(lines: List[str], rng: random.Random) -> Tuple[List[str], int]:
+    groups = {}
+    for idx, line in enumerate(lines):
+        match = QUOTED_FIELDS_RE.search(line)
+        if not match:
+            key = ("__nomatch__", idx)
+            groups[key] = [(idx, line)]
+            continue
+        fields = [f.strip() for f in match.group(1).split(",")]
+        if len(fields) < 2:
+            key = ("__short__", idx)
+            groups[key] = [(idx, line)]
+            continue
+        key = (fields[0].lower(), fields[1].lower())
+        groups.setdefault(key, []).append((idx, line))
+
+    kept_indices = set()
+    dropped = 0
+    for items in groups.values():
+        kept_indices.add(rng.choice(items)[0])
+        dropped += len(items) - 1
+
+    return [line for idx, line in enumerate(lines) if idx in kept_indices], dropped
 
 
 def strip_prev_seen_dates(lines: List[str]) -> Tuple[List[str], int]:
@@ -429,15 +497,19 @@ def main():
         kept,
         dropped_recent,
         dropped_unknown,
+        dropped_ignored,
         dropped_missing_code,
         dropped_multi_dup,
         stripped_old_repost,
         cleaned_new_company,
         defaulted_discount,
-        marked_review,
+        marked_high,
+        marked_multi,
     ) = filter_lines(lines, today, args.recent_weeks)
 
     rng = random.Random(args.seed)
+    kept, record_dups_dropped = dedup_by_brand_code(kept, rng)
+
     training_batch_count = 0
     if not args.no_sort:
         training_batches = build_training_batches()
@@ -456,14 +528,17 @@ def main():
         f"Dropped {len(dropped_recent)} '...' line(s) with previous-seen date < {args.recent_weeks} week(s) ago"
     )
     print(f"Dropped {len(dropped_unknown)} UNKNOWN-brand line(s)")
+    print(f"Dropped {len(dropped_ignored)} ignored-brand line(s) ({', '.join(sorted(IGNORED_BRANDS))})")
     print(f"Dropped {len(dropped_missing_code)} line(s) with no discount code (None)")
     print(f"Dropped {len(dropped_multi_dup)} extra MULTI line(s) sharing a post URL")
+    print(f"Dropped {record_dups_dropped} (brand, code) duplicate line(s) (random survivor kept)")
     print(f"Stripped leading '...' from {stripped_old_repost} old-repost line(s)")
     print(f"Cleaned {cleaned_new_company} new-company '___' line(s)")
     print(f"Defaulted {defaulted_discount} discount value(s) from None to {DEFAULT_DISCOUNT_VALUE}")
     print(
-        f"Marked {marked_review} line(s) with REVIEW__ "
-        f"(weird value, percent > {PERCENT_REVIEW_THRESHOLD}, or euro > {EURO_REVIEW_THRESHOLD})"
+        f"Marked REVIEW: {marked_high} HIGH "
+        f"(weird value, percent > {PERCENT_REVIEW_THRESHOLD}, or euro > {EURO_REVIEW_THRESHOLD}), "
+        f"{marked_multi} MULTI (kept first per post URL)"
     )
     if args.no_sort:
         print("Sort: skipped (--no-sort)")

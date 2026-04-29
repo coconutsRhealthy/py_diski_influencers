@@ -14,8 +14,6 @@ PERCENT_REVIEW_THRESHOLD = 40
 EURO_REVIEW_THRESHOLD = 100
 REVIEW_PREFIX = "REVIEW_"
 REVIEW_HIGH = "REVIEW_HIGH__"
-REVIEW_MULTI = "REVIEW_MULTI__"
-REVIEW_HIGH_MULTI = "REVIEW_HIGH_MULTI__"
 
 IGNORED_BRANDS = {
     "hellofresh.nl",
@@ -23,6 +21,9 @@ IGNORED_BRANDS = {
     "esn",
     "gymshark",
     "achateshop.com",
+}
+BRAND_MIN_CODE_LENGTH = {
+    "shein": 6,
 }
 
 DISCOUNTS_JSON_PATH = Path(
@@ -58,6 +59,15 @@ PREV_SEEN_DATE_RE = re.compile(r"\.{10}(\d{2})-(\d{2})")
 QUOTED_FIELDS_RE = re.compile(r'"([^"]*)"')
 DISCOUNT_VALUE_RE = re.compile(r"^€?(\d+(?:\.\d+)?)%?$")
 URL_RE = re.compile(r"https?://\S+")
+EMOJI_RE = re.compile(
+    "["
+    "\U0001F000-\U0001FFFF"
+    "\U00002600-\U000027BF"
+    "\U0000FE00-\U0000FE0F"
+    "\U0000200D"
+    "]+",
+    flags=re.UNICODE,
+)
 
 
 def parse_prev_seen_date(line: str, today: date) -> Optional[date]:
@@ -107,6 +117,20 @@ def strip_review_prefix(line: str) -> str:
     if idx == -1:
         return line
     return line[idx + 2:]
+
+
+def should_drop_short_brand_code(line: str) -> bool:
+    match = QUOTED_FIELDS_RE.search(line)
+    if not match:
+        return False
+    fields = [f.strip() for f in match.group(1).split(",")]
+    if len(fields) < 2:
+        return False
+    brand = fields[0].lstrip("_").lower()
+    min_len = BRAND_MIN_CODE_LENGTH.get(brand)
+    if min_len is None:
+        return False
+    return len(fields[1]) < min_len
 
 
 def should_drop_missing_code(line: str) -> bool:
@@ -176,12 +200,13 @@ def filter_lines(lines, today: date, recent_weeks: int):
     dropped_recent = []
     dropped_unknown = []
     dropped_ignored = []
+    dropped_short_code = []
     dropped_missing_code = []
     stripped_old_repost = 0
     cleaned_new_company = 0
     defaulted_discount = 0
     marked_high = 0
-    marked_multi = 0
+    multi_groups_kept = 0
     dropped_multi_dup = []
     multi_seen_urls = set()
     for line in lines:
@@ -189,6 +214,8 @@ def filter_lines(lines, today: date, recent_weeks: int):
             dropped_unknown.append(line)
         elif should_drop_ignored_brand(line):
             dropped_ignored.append(line)
+        elif should_drop_short_brand_code(line):
+            dropped_short_code.append(line)
         elif should_drop_missing_code(line):
             dropped_missing_code.append(line)
         elif should_drop_recent_repost(line, today, recent_weeks):
@@ -215,11 +242,7 @@ def filter_lines(lines, today: date, recent_weeks: int):
                     continue
                 if url:
                     multi_seen_urls.add(url)
-                if line.startswith(REVIEW_HIGH):
-                    line = REVIEW_HIGH_MULTI + line[len(REVIEW_HIGH):]
-                elif not is_review_line(line):
-                    line = REVIEW_MULTI + line
-                marked_multi += 1
+                multi_groups_kept += 1
                 line = line.replace("MULTI__", "", 1)
 
             kept.append(line)
@@ -228,13 +251,14 @@ def filter_lines(lines, today: date, recent_weeks: int):
         dropped_recent,
         dropped_unknown,
         dropped_ignored,
+        dropped_short_code,
         dropped_missing_code,
         dropped_multi_dup,
         stripped_old_repost,
         cleaned_new_company,
         defaulted_discount,
         marked_high,
-        marked_multi,
+        multi_groups_kept,
     )
 
 
@@ -439,6 +463,17 @@ def dedup_by_brand_code(lines: List[str], rng: random.Random) -> Tuple[List[str]
     return [line for idx, line in enumerate(lines) if idx in kept_indices], dropped
 
 
+def strip_emojis(lines: List[str]) -> Tuple[List[str], int]:
+    cleaned = []
+    stripped_count = 0
+    for line in lines:
+        new_line = EMOJI_RE.sub("", line)
+        if new_line != line:
+            stripped_count += 1
+        cleaned.append(new_line)
+    return cleaned, stripped_count
+
+
 def strip_prev_seen_dates(lines: List[str]) -> Tuple[List[str], int]:
     cleaned = []
     stripped_count = 0
@@ -498,13 +533,14 @@ def main():
         dropped_recent,
         dropped_unknown,
         dropped_ignored,
+        dropped_short_code,
         dropped_missing_code,
         dropped_multi_dup,
         stripped_old_repost,
         cleaned_new_company,
         defaulted_discount,
         marked_high,
-        marked_multi,
+        multi_groups_kept,
     ) = filter_lines(lines, today, args.recent_weeks)
 
     rng = random.Random(args.seed)
@@ -518,6 +554,7 @@ def main():
 
     kept, urls_stripped = strip_urls_from_non_review(kept)
     kept, prev_dates_stripped = strip_prev_seen_dates(kept)
+    kept, emojis_stripped = strip_emojis(kept)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
@@ -529,6 +566,7 @@ def main():
     )
     print(f"Dropped {len(dropped_unknown)} UNKNOWN-brand line(s)")
     print(f"Dropped {len(dropped_ignored)} ignored-brand line(s) ({', '.join(sorted(IGNORED_BRANDS))})")
+    print(f"Dropped {len(dropped_short_code)} short-code line(s) (per-brand min length)")
     print(f"Dropped {len(dropped_missing_code)} line(s) with no discount code (None)")
     print(f"Dropped {len(dropped_multi_dup)} extra MULTI line(s) sharing a post URL")
     print(f"Dropped {record_dups_dropped} (brand, code) duplicate line(s) (random survivor kept)")
@@ -536,16 +574,17 @@ def main():
     print(f"Cleaned {cleaned_new_company} new-company '___' line(s)")
     print(f"Defaulted {defaulted_discount} discount value(s) from None to {DEFAULT_DISCOUNT_VALUE}")
     print(
-        f"Marked REVIEW: {marked_high} HIGH "
-        f"(weird value, percent > {PERCENT_REVIEW_THRESHOLD}, or euro > {EURO_REVIEW_THRESHOLD}), "
-        f"{marked_multi} MULTI (kept first per post URL)"
+        f"Marked {marked_high} REVIEW_HIGH line(s) "
+        f"(weird value, percent > {PERCENT_REVIEW_THRESHOLD}, or euro > {EURO_REVIEW_THRESHOLD})"
     )
+    print(f"Collapsed {multi_groups_kept} MULTI group(s) to first line")
     if args.no_sort:
         print("Sort: skipped (--no-sort)")
     else:
         print(f"Sorted using {training_batch_count} training batch(es)")
     print(f"Stripped URL from {urls_stripped} non-REVIEW line(s)")
     print(f"Stripped trailing previous-seen date from {prev_dates_stripped} line(s)")
+    print(f"Stripped emojis from {emojis_stripped} line(s)")
 
 
 if __name__ == "__main__":

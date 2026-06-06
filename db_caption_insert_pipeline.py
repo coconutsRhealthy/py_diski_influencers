@@ -1,7 +1,7 @@
 from util.read_json_insta import read_insta_json_data
 from util.read_json_insta_mentioned import read_insta_mentioned_json_data
 from util.read_json_tiktok import read_tiktok_json_data
-from db.db_insert_captions import insert_records
+from db.db_insert_captions import insert_records, insert_archive_records
 from util.captions_util import normalize_caption, check_keywords_in_caption
 
 def pipeline_insert_captions_in_db(platform):
@@ -34,18 +34,28 @@ def pipeline_insert_captions_in_db(platform):
     else:
         raise ValueError("Unsupported platform. Use 'instagram' or 'tiktok'.")
 
-    records = []
+    archive_records = []  # ALL captions (unfiltered) -> captions_archive
+    records = []          # discount-keyword captions only -> instagram/tiktok
     for username, posts in user_posts.items():
         for post in posts:
             normalized_caption = normalize_caption(post['caption'])
 
+            base_record = {
+                'influencer_name': username,
+                'caption': normalized_caption,
+                'post_url': post['url'],
+                'post_date': post['timestamp']
+            }
+
+            # Archive every caption (incl. empty) as the complete raw corpus.
+            archive_records.append(base_record)
+
+            # Existing discount flow: only keyword-matched captions go to the main table.
             if check_keywords_in_caption(normalized_caption):
-                records.append({
-                    'influencer_name': username,
-                    'caption': normalized_caption,
-                    'post_url': post['url'],
-                    'post_date': post['timestamp']
-                })
+                records.append(base_record)
+
+    insert_archive_records(archive_records, platform)
+    print(f"Archived {len(archive_records)} {platform} captions.")
 
     insert_records(records, platform)
     print(f"Inserted {len(records)} {platform} records.")

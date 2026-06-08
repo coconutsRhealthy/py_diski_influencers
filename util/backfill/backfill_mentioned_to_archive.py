@@ -9,11 +9,16 @@ INSERT IGNORE, so this script is safe to re-run and dedupes against existing row
 import glob
 import json
 import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from util.captions_util import normalize_caption
 from db.db_insert_captions import insert_archive_records
 
-ARCHIVE_GLOB = "jsons/insta/mentioned/apify_api_jsons/*.json"
+ARCHIVE_GLOB = str(PROJECT_ROOT / "jsons/insta/mentioned/apify_api_jsons/*.json")
 PLATFORM = "instagram"
 
 

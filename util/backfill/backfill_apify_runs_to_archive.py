@@ -12,6 +12,11 @@ Captions are normalized identically to the live pipeline and inserted via
 INSERT IGNORE, so this is safe to re-run and dedupes against existing rows.
 """
 import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from apify_client import ApifyClient
 from dotenv import load_dotenv
@@ -105,7 +110,7 @@ def backfill_actor(client, actor_id, platform):
 
 
 def main():
-    load_dotenv()
+    load_dotenv(PROJECT_ROOT / ".env")
     token = os.environ.get("APIFY_TOKEN", os.getenv("APIFY_KEY"))
     client = ApifyClient(token)
 

@@ -17,12 +17,17 @@ so this is safe to re-run and dedupes against existing rows.
 import glob
 import json
 import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from util.captions_util import normalize_caption
 from db.db_insert_captions import insert_archive_records
-from backfill_apify_runs_to_archive import extract_instagram, extract_tiktok
+from util.backfill.backfill_apify_runs_to_archive import extract_instagram, extract_tiktok
 
-JSON_GLOB = "jsons/**/*.json"
+JSON_GLOB = str(PROJECT_ROOT / "jsons/**/*.json")
 EXCLUDE_SUBSTR = "apify_api_jsons"  # already backfilled from local files
 
 
